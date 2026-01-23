@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: asic-demo
+spec:
+  restartPolicy: Never
+  nodeSelector:
+    netint-type: "quadra"   # Same node label
+  containers:
+    - name: asic-test
+      image: busybox:1.35
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+          netint.ca/ASIC: 1
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+          netint.ca/ASIC: 1
