@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mixed-workload-demo
+spec:
+  restartPolicy: Never
+  containers:
+    - name: vpu-manager
+      image: ubuntu:22.04
+      command: ["/bin/bash", "/scripts/scheduler.sh"]
+      volumeMounts:
+        - name: script-vol
+          mountPath: /scripts
+      resources:
+        requests:
+          netint.ca/Quadra: 1
+        limits:
+          netint.ca/Quadra: 1
+  volumes:
+    - name: script-vol
+      configMap:
+        name: vpu-orchestrator
