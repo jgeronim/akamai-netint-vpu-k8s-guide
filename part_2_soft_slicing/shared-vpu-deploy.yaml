@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpu-shared-pool
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: vpu-worker
+  template:
+    metadata:
+      labels:
+        app: vpu-worker
+    spec:
+      containers:
+      - name: transcoder
+        image: netint/quadra_ubuntu-24.04_ffmpeg:latest
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: vpu-dev-ns
+          mountPath: /dev/nvme0n1
+        - name: vpu-dev-ctrl
+          mountPath: /dev/nvme0
+        - name: host-shm
+          mountPath: /dev/shm
+        - name: scripts
+          mountPath: /usr/local/bin/vpu-guard.sh
+          subPath: vpu-guard.sh
+        command: ["/bin/bash", "/usr/local/bin/vpu-guard.sh"]
+      volumes:
+      - name: vpu-dev-ns
+        hostPath:
+          path: /dev/nvme0n1
+      - name: vpu-dev-ctrl
+        hostPath:
+          path: /dev/nvme0
+      - name: host-shm
+        hostPath:
+          path: /dev/shm
+      - name: scripts
+        configMap:
+          name: vpu-scripts
+          defaultMode: 0755

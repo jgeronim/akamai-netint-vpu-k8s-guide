@@ -10,16 +10,17 @@
 
 ## Contents
 
-- [Overview](#overview)  
-- [Prerequisites](#prerequisites)  
-- [1. Create LKE Cluster with Quadra Pool](#1-create-lke-cluster-with-quadra-pool)  
-- [2. Install NETINT Device Plugin](#2-install-netint-device-plugin)  
-- [3. Inspect NETINT Resources (ASIC vs Quadra)](#3-inspect-netint-resources-asic-vs-quadra)  
-- [4. ASIC vs Quadra Scheduling](#4-asic-vs-quadra-scheduling)  
-- [5. Single Pod with Multiple Encoding Streams](#5-single-pod-with-multiple-encoding-streams)  
-- [6. Single VPU, Multiple Pods (One-Pod-Per-VPU)](#6-single-vpu-multiple-pods-one-pod-per-vpu)  
-- [7. Advanced: Internal Scheduler Pod (“Pod-as-a-Node”)](#7-advanced-internal-scheduler-pod-pod-as-a-node)  
-- [8. Cleanup](#8-cleanup)
+- Overview
+- Prerequisites
+- 1. Create LKE Cluster with Quadra Pool
+- 2. Install NETINT Device Plugin
+- 3. Inspect NETINT Resources (ASIC vs Quadra)
+- 4. ASIC vs Quadra Scheduling
+- 5. Single Pod with Multiple Encoding Streams
+- 6. Single VPU, Multiple Pods (One-Pod-Per-VPU)
+- 7. Advanced: Internal Scheduler Pod (“Pod-as-a-Node”)
+- 8. Phase 2 (Advanced): Soft-Slicing One VPU Across Multiple Pods   ← **new**
+- 9. Cleanup
 
 ***
 
@@ -546,7 +547,23 @@ You can extend this pattern by:
 
 ***
 
-## 8. Cleanup
+## 8. Phase 2: Soft-Slicing One VPU Across Multiple Pods
+
+The `phase2-soft-slicing/` directory contains an alternative, host-level pattern that lets you run
+multiple Kubernetes pods against a single Quadra VPU by sharing the device nodes and `/dev/shm`
+across a small pool of workers.
+
+This **does not** change the `netint.ca/Quadra` extended resource model. Instead, it:
+- Prepares the host VM with Quadra + FFmpeg.
+- Centralizes the VPU logic in `vpu-guard.sh`.
+- Deploys a `vpu-shared-pool` `Deployment` with multiple pods mounting the same VPU.
+- Provides a verification runbook to prove that multiple pods are sharing one card.
+
+See [`phase2-soft-slicing/README.md`](phase2-soft-slicing/README.md) for details.
+
+***
+
+## 9. Cleanup
 
 When you are done with the demo:
 
@@ -555,7 +572,9 @@ kubectl delete -f quadra-a.yaml -f quadra-b.yaml \
   -f quadra-demo-pod.yaml -f asic-demo-pod.yaml \
   -f quadra-process-viewer.yaml \
   -f mixed-workload-pod.yaml \
-  -f orchestrator-config.yaml --ignore-not-found
+  -f orchestrator-config.yaml \
+  -f phase2-shared-vpu-deploy.yaml \
+  -f configmap vpu-scripts --ignore-not-found
 
 linode-cli lke cluster-delete "$LKE_CLUSTER_ID"
 ```
